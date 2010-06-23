@@ -21,16 +21,14 @@ You’ll need to have PNGCrush installed.
 	        --from-directory "."                                    \
 	        --to-directory "../frontend/ui"                         \
 	                                                                \
-	        --confirm-overwrite!                                    \
+	        --confirm-overwrite                                     \
 	                                                                \
-	        --strip-gamma                                           \
-	        --strip-color-profile                                   \
+	        --strip sRGB, gAMA                                      \
 	                                                                \
-	        --rename-from-regex "okogreen.scaffold_(.+)"            \
-	        --rename-to-regex "\1"                                  \
+	        --rename-from "okogreen.scaffold_(.+).png"              \
+	        --rename-to "\1.png"                                    \
 	                                                                \
-	        --notify-growl                                          \
-	        --notify-audible                                        \
+	        --notify-by growl, audible                              \
 	                                                                \
 	        --dry-run
 
@@ -40,9 +38,13 @@ You’ll need to have PNGCrush installed.
 
 ##	Notes
 
-`--from-directory` and `--to-directory` both asks for path references and defaults to the current directory.  If `--confirm-overwrite!` is not specified, then conflicts will cause the old files to be renamed `fileName.old.<HASH>`.  Otherwise, conflicts will cause the old files to be overwritten.  Other parameters are self-documentary.
+*	`--from-directory` and `--to-directory` both asks for path references and defaults to the current directory.
+
+*	If `--confirm-overwrite` is not specified, then conflicts will cause the old files to be renamed `fileName.old.<HASH>`.  Otherwise, conflicts will cause the old files to be overwritten.  Other parameters are self-documentary.
 
 Specifying `--dry-run` will cause Pictorial not to modify any file.
+
+`--strip` wants an array of “bulks” that PNGCrush understands.
 
 
 
