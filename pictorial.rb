@@ -143,7 +143,7 @@ class Pictorial
 		},
 		
 		:verbose => false,
-		:dryRun => false
+		:dry_run => false
 	
 	}
 	
@@ -239,7 +239,7 @@ class Pictorial
 		
 		options.on("-d", "--dry-run", "Dry Run") { |input|
 
-			@@options[:dryRun] = true
+			@@options[:dry_run] = true
 			
 		}
 		
@@ -462,7 +462,16 @@ class Pictorial
 		fromPathRef = Pathname.new(fromPath).relative_path_from(PICTORIAL_PATH)
 		toPathRef = Pathname.new(toPath).relative_path_from(PICTORIAL_PATH)
 		
-		self.logWithTime "#{fromPathRef} -> #{toPathRef}"
+		if @@options[:dry_run]
+		
+			self.logWithTime "Dry Run: #{fromPathRef} -> #{toPathRef}"
+			return
+			
+		else
+		
+			self.logWithTime "#{fromPathRef} -> #{toPathRef}"
+		
+		end
 
 		argumentRemovingChunks = ""
 
