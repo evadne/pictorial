@@ -1,14 +1,14 @@
 #	`pictorial.rb`
 
-Pictorial is your tiny image factory.  It monitors a particular directory for new `.png` files, runs them through `pngcrush`, strips the gamma information and the color profile optionally, renames them optionally, and places them in another directory before showing a Growl notification.
+Pictorial is your tiny image factory.  It monitors a particular directory for new `.png` files matching a particular regular expression, runs them through `PNGCrush`, strips chunks (like, the gamma information or the color profile) optionally, renames them, and places them in another directory before showing a Growl notification or an audible alert.
 
 
 
 
 
-##	Dependncy
+##	Dependncy / Limits
 
-You’ll need to have PNGCrush installed.
+You’ll need to have `PNGCrush`, obtainable thru MacPorts.  This script relies on OS X’s `fsevents` too.
 
 
 
@@ -16,7 +16,7 @@ You’ll need to have PNGCrush installed.
 
 ##	Usage (multi-lined)
 
-	$ pictorial                                                     \
+	$ ./pictorial.rb                                                \
 	                                                                \
 	        --from-directory "."                                    \
 	        --to-directory "../frontend/ui"                         \
@@ -40,7 +40,7 @@ You’ll need to have PNGCrush installed.
 
 *	`--from-directory` and `--to-directory` both asks for path references and defaults to the current directory.
 
-*	If `--confirm-overwrite` is not specified, then conflicts will cause the old files to be renamed `fileName.old.<HASH>`.  Otherwise, conflicts will cause the old files to be overwritten.  Other parameters are self-documentary.
+*	If `--confirm-overwrite` is not specified, then conflicts will cause the old files to be renamed `fileName.<HASH>(.extension)`.  Otherwise, conflicts will cause the old files to be overwritten.  Other parameters are self-documentary.
 
 *	Specifying `--dry-run` will cause Pictorial not to modify any file.
 
@@ -48,6 +48,13 @@ You’ll need to have PNGCrush installed.
 
 *	`--notify-by nil` silences the beep and suppresses the Growl notification.
 
+
+
+
+
+##	Contact
+
+Evadne Wu at Iridia Productions, 2010 — `ev@iridia.tw`.
 
 
 
