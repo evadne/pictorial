@@ -16,23 +16,23 @@ You’ll need to have PNGCrush installed.
 
 ##	Usage (multi-lined)
 
-	$ pictorial 							\
-									\
-		--from-directory "." 					\
-		--to-directory "../frontend/ui" 			\
-									\
-		--confirm-overwrite! 					\
-									\
-		--strip-gamma 						\
-		--strip-color-profile 					\
-									\
-		--rename-from-regex "okogreen.scaffold_(.+)" 		\
-		--rename-to-regex "\1" 					\
-									\
-		--notify-growl 						\
-		--notify-audible 					\
-									\
-		--dry-run
+	$ pictorial                                                     \
+	                                                                \
+	        --from-directory "."                                    \
+	        --to-directory "../frontend/ui"                         \
+	                                                                \
+	        --confirm-overwrite!                                    \
+	                                                                \
+	        --strip-gamma                                           \
+	        --strip-color-profile                                   \
+	                                                                \
+	        --rename-from-regex "okogreen.scaffold_(.+)"            \
+	        --rename-to-regex "\1"                                  \
+	                                                                \
+	        --notify-growl                                          \
+	        --notify-audible                                        \
+	                                                                \
+	        --dry-run
 
 
 
