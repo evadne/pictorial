@@ -118,7 +118,7 @@ class Pictorial
 	@@options = {
 	
 		:from_directory => File.expand_path(File.dirname(__FILE__)),
-		:to_directory => File.expand_path(File.dirname(__FILE__)),
+		:to_directory => nil,
 		
 		:strip_chunks => [
 		
@@ -169,19 +169,19 @@ class Pictorial
 		options.separator "Locating & processing files:"
 		options.separator ""
 		
-		options.on("--from-directory", String, "Monitored (Source) directory") { |inFromDirectory|
+		options.on("--from-directory [STRING]", String, "Monitored (Source) directory") { |inFromDirectory|
 
 			self.complain "The source directory does not exist." if (!File.directory? inFromDirectory)
 			
-			@@options[:from_directory] = inFromDirectory
+			@@options[:from_directory] = Pathname.new(inFromDirectory).realpath
 			
 		}
 		
-		options.on("--to-directory", String, "Destination directory") { |inToDirectory|
+		options.on("--to-directory [STRING]", String, "Destination directory") { |inToDirectory|
 
 			self.complain("The destination directory does not exist and will be created.", false) if (!File.directory? inToDirectory)
 			
-			@@options[:to_directory] = inToDirectory
+			@@options[:to_directory] = Pathname.new(inToDirectory).realpath
 			
 		}
 		
@@ -217,7 +217,7 @@ class Pictorial
 			
 		}
 		
-		options.on("--rename-to [String]", Regexp, 
+		options.on("--rename-to [String]", String, 
 		
 			"When replacing captured groups during file rename, use this string as the template.", 
 			"Example: \"\\1\\2\"", 
@@ -372,7 +372,12 @@ class Pictorial
 		self.describeOptions if @@options[:verbose]
 		
 		
-		if (@@options[:to_directory] == @@options[:from_directory])
+		
+		
+		
+		@@options[:to_directory] = @@options[:from_directory].to_s if (@@options[:to_directory] == nil)
+		
+		if (@@options[:to_directory].to_s == @@options[:from_directory].to_s)
 		
 			self.say "A seperate directory named Pictorial will be created within the original directory."
 		
