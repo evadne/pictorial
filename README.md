@@ -42,9 +42,11 @@ You’ll need to have PNGCrush installed.
 
 *	If `--confirm-overwrite` is not specified, then conflicts will cause the old files to be renamed `fileName.old.<HASH>`.  Otherwise, conflicts will cause the old files to be overwritten.  Other parameters are self-documentary.
 
-Specifying `--dry-run` will cause Pictorial not to modify any file.
+*	Specifying `--dry-run` will cause Pictorial not to modify any file.
 
-`--strip` wants an array of “bulks” that PNGCrush understands.
+*	`--strip` wants an array of chunks that PNGCrush understands.
+
+*	`--notify-by nil` silences the beep and suppresses the Growl notification.
 
 
 
