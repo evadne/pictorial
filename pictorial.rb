@@ -11,10 +11,11 @@ require 'find'
 require 'ftools'
 require 'pathname'
 
-gem 'ruby-fsevent'
-require 'fsevent'
+require 'directory_watcher'
 
 gem 'visionmedia-growl'
+require "growl"
+include Growl
 
 gem 'term-ansicolor'
 require 'term/ansicolor'
@@ -35,44 +36,62 @@ require 'tmpdir'
 
 PICTORIAL_PATH = Pathname.new(File.expand_path(File.dirname(__FILE__)))
 
-class PictorialFileChangeHandler < FSEvent
 
-	@@lastCalled = Time.now
 
-	def on_change(directories)
 
-		puts "on change"
 
-		changedFiles = []
 
-		directories.each { |theDirectory|
+
+
+
+
+class PictorialWatcher
+
+	@@changeHandler = nil
+	
+	def initialize (monitorDirectory)
+	
+		@@changeHandler = DirectoryWatcher.new monitorDirectory, :pre_load => true
+
+		@@changeHandler.interval = 1.0
+		@@changeHandler.stable = 2.0
 		
-			next if !File.directory? theDirectory
+		@@changeHandler.glob = "*"
+		@@changeHandler.add_observer self
 		
-			Find.find(theDirectory) { |thePath|
-			
-				next if File.atime(thePath) < @@lastCalled
-				puts "file is accessed after script is first called"
-				
-				next if File.directory? thePath
-				changedFiles.push(thePath)
-				
-			}
-			
+		@@changeHandler.start
+
+		begin
+
+			gets
+		
+		end until false
+	
+	end
+	
+	def update( *events )
+
+		ary = events.find_all { |event|
+		
+			event.type == :stable
+		
 		}
 		
-		@@lastCalled = Time.now
+		return if ary.empty?
 		
-		Pictorial.handleChange(changedFiles) if changedFiles.length != 0
+		ary.each { |evt|
+			
+			Pictorial.processFile evt.path
 		
-	end
-  
+		}
+		
+		notify_info "Updated #{ary.length} #{(ary.length > 1) ? "images" : "image"}", :title => "Pictorial", :icon => :jpeg
+		
+		sleep 0.5
+		
+	end	
+
 end
-
-
-
-
-
 
 
 
@@ -117,6 +136,12 @@ class Pictorial
 	
 	}
 	
+	def self.options
+	
+		@@options
+	
+	end
+	
 	
 	
 	
@@ -145,16 +170,6 @@ class Pictorial
 
 			self.complain("The destination directory does not exist and will be created.", false) if (!File.directory? inToDirectory)
 			
-			if (inToDirectory == @@options[:from_directory])
-			
-				self.complain("A seperate directory named Pictorial will be created within the original directory.", false)
-			
-				inToDirectory = inToDirectory + "/Pictorial"
-			
-			end
-			
-			File.mkpath inToDirectory
-
 			@@options[:to_directory] = inToDirectory
 			
 		}
@@ -252,7 +267,7 @@ class Pictorial
 
 #	The change handler
 
-	@@changeHandler = PictorialFileChangeHandler.new
+	@@changeHandler = nil
 
 
 
@@ -335,14 +350,23 @@ class Pictorial
 		
 		self.describeOptions if @@options[:verbose]
 		
-		self.say "Monitoring:	#{@@options[:from_directory]}"
-		self.say "Destination:	#{@@options[:to_directory]}"
 		
+		if (@@options[:to_directory] == @@options[:from_directory])
 		
-		@@changeHandler.watch_directories @@options[:from_directory]
-		@@changeHandler.latency = 2
-		@@changeHandler.start
+			self.say "A seperate directory named Pictorial will be created within the original directory."
 		
+			@@options[:to_directory] = @@options[:to_directory] + "/Pictorial"
+		
+		end
+		
+		File.mkpath @@options[:to_directory]
+		
+		puts "Monitoring:	#{@@options[:from_directory]}"
+		puts "Destination:	#{@@options[:to_directory]}"
+		puts "\n"
+		
+		@@changeHandler = PictorialWatcher.new @@options[:from_directory]
+				
 	end
 
 
@@ -388,7 +412,7 @@ class Pictorial
 		return self.say "#{thePath} is not an eligible file, ignoring." if !self.isEligibleFile(thePath)
 		
 		sourcePath = thePath
-		plausibleDestinationPath = thePath.sub(@@options[:renaming_schemata][:from], @@options[:renaming_schemata][:to])
+		plausibleDestinationPath = thePath.sub(@@options[:renaming_schemata][:from], @@options[:renaming_schemata][:to]).sub(@@options[:from_directory], @@options[:to_directory])
 		
 		destinationPath = plausibleDestinationPath
 		
