@@ -70,7 +70,7 @@ class PictorialWatcher
 	end
 	
 	def update( *events )
-
+	
 		ary = events.find_all { |event|
 		
 			event.type == :stable
@@ -79,11 +79,18 @@ class PictorialWatcher
 		
 		return if ary.empty?
 		
+		processedFiles = 0
+		
 		ary.each { |evt|
 			
+			next if !Pictorial.isEligibleFile(evt.path)
+			
+			processedFiles += 1
 			Pictorial.processFile evt.path
 		
 		}
+		
+		return if processedFiles == 0
 		
 		if Pictorial::options[:notify_by][:growl]
 		
@@ -446,9 +453,7 @@ class Pictorial
 		
 			self.say "#{destinationPath} already exists.  We’ll append a hash to the filename.  Use --confirm-overwrite to suppress this behavior and overwrite the file."
 			
-			extensionName = File.extname(destinationPath)
-			
-			destinationPath = plausibleDestinationPath
+			extensionName = File.extname(plausibleDestinationPath)
 			
 			begin
 			
