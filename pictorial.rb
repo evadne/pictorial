@@ -85,8 +85,18 @@ class PictorialWatcher
 		
 		}
 		
-		notify_info "Updated #{ary.length} #{(ary.length > 1) ? "images" : "image"}", :title => "Pictorial", :icon => :jpeg
+		if Pictorial::options[:notify_by][:growl]
 		
+			notify_info "Updated #{ary.length} #{(ary.length > 1) ? "images" : "image"}", :title => "Pictorial", :icon => :jpeg
+		
+		end
+		
+		if Pictorial::options[:notify_by][:audible]
+		
+			puts 7.chr
+		
+		end
+
 		sleep 0.5
 		
 	end	
@@ -125,11 +135,12 @@ class Pictorial
 		
 		:confirm_overwrite => false,
 		
-		:notify_by => [
+		:notify_by => {
 		
-			"growl", "audible"
+			:growl => true,
+			:audible => true
 		
-		],
+		},
 		
 		:verbose => false,
 		:dryRun => false
@@ -234,7 +245,17 @@ class Pictorial
 		
 		options.on("--notify-by growl, audible", Array, "Notify you on completed conversion.", "Defaults to growl, audible.") { |inNotificationMeans|
 		
-			@@options[:notify_by] = inNotificationMeans
+			@@options[:notify_by].each_key { |notifyType|
+			
+				@@options[:notify_by][notifyType] = false
+			
+			}
+		
+			inNotificationMeans.each { |notificationType|
+			
+				@@options[:notify_by] = true if @@options[:notify_by] != nil
+			
+			}
 		
 		}
 		
