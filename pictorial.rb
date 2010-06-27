@@ -445,8 +445,8 @@ class Pictorial
 			"pngcrush
 			
 				#{@@options[:strip_chunks].empty? ? "" : (" -rem " + @@options[:strip_chunks].join(" -rem "))}
-				\"#{Pathname.new(fromPath).relative_path_from(PICTORIAL_PATH)}\"
-				\"#{Pathname.new(toPath).relative_path_from(PICTORIAL_PATH)}\"
+				\"#{fromPath}\"
+				\"#{toPath}\"
 				#{@@options[:verbose] ? "" : " > /dev/null"}
 			
 			".gsub("\t", " ").gsub("\n", " ")
