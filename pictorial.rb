@@ -252,15 +252,15 @@ class Pictorial
 		
 		options.on("--notify-by growl, audible", Array, "Notify you on completed conversion.", "Defaults to growl, audible.") { |inNotificationMeans|
 		
-			@@options[:notify_by].each_key { |notifyType|
+			@@options[:notify_by].each_key { |notificationType|
 			
-				@@options[:notify_by][notifyType] = false
+				@@options[:notify_by][notificationType] = false
 			
 			}
 		
 			inNotificationMeans.each { |notificationType|
 			
-				@@options[:notify_by] = true if @@options[:notify_by] != nil
+				@@options[:notify_by][notificationType] = true if @@options[:notify_by][notificationType] != nil
 			
 			}
 		
