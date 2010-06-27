@@ -1,4 +1,7 @@
 #!/usr/bin/env ruby
+# encoding: UTF-8
+
+#	coding: utf-8
 
 #	pictorial.rb
 #	Evadne Wu at Iridia Productions, 2010
@@ -8,20 +11,21 @@ require 'optparse'
 require 'pp'
 
 require 'find'
-require 'ftools'
+require 'fileutils'
 require 'pathname'
 
+gem 'directory_watcher'
 require 'directory_watcher'
 
-gem 'visionmedia-growl'
-require "growl"
-include Growl
+gem 'ruby-growl'
+require 'ruby-growl'
+
 
 gem 'term-ansicolor'
 require 'term/ansicolor'
 include Term::ANSIColor
 
-require 'active_support/secure_random'
+require 'SecureRandom'
 
 require 'tmpdir'
 
@@ -45,70 +49,40 @@ PICTORIAL_PATH = Pathname.new(File.expand_path(File.dirname(__FILE__)))
 
 
 
-class PictorialWatcher
+class File
 
-	@@changeHandler = nil
+	def self.uniquePath (originalPath = nil, hashPaddingDigits = 2)
 	
-	def initialize (monitorDirectory)
-	
-		@@changeHandler = DirectoryWatcher.new monitorDirectory, :pre_load => true
-
-		@@changeHandler.interval = 1.0
-		@@changeHandler.stable = 2.0
+		return if originalPath.nil?		
+		return originalPath if !(File.exists? originalPath)
 		
-		@@changeHandler.glob = "*"
-		@@changeHandler.add_observer self
+		destinationPath = originalPath
+		originalExtension = File.extname(originalPath).to_s
 		
-		@@changeHandler.start
-
-		begin
-
-			gets
+		while File.exists? destinationPath do
 		
-		end until false
-	
+			if originalExtension.empty?
+			
+				destinationPath = originalPath + "." + SecureRandom.hex(hashPaddingDigits)
+				
+			else
+			
+				destinationPath = originalPath.sub(originalExtension, ".#{SecureRandom.hex(hashPaddingDigits)}#{originalExtension}")
+			
+			end
+							
+		end
+		
+		return destinationPath
+						
 	end
-	
-	def update( *events )
-	
-		ary = events.find_all { |event|
-		
-			event.type == :stable
-		
-		}
-		
-		return if ary.empty?
-		
-		processedFiles = 0
-		
-		ary.each { |evt|
-			
-			next if !Pictorial.isEligibleFile(evt.path)
-			
-			processedFiles += 1
-			Pictorial.processFile evt.path
-		
-		}
-		
-		return if processedFiles == 0
-		
-		if Pictorial::options[:notify_by][:growl]
-		
-			notify_info "Updated #{ary.length} #{(ary.length > 1) ? "images" : "image"}", :title => "Pictorial", :icon => :jpeg
-		
-		end
-		
-		if Pictorial::options[:notify_by][:audible]
-		
-			puts 7.chr
-		
-		end
-
-		sleep 0.5
-		
-	end	
 
 end
+
+
+
+
+
 
 
 
@@ -120,45 +94,22 @@ class Pictorial
 
 
 
+
+
 #	Options & the option parser
 
 	@@options = {
 	
-		:from_directory => File.expand_path(File.dirname(__FILE__)),
-		:to_directory => nil,
-		
-		:strip_chunks => [
-		
-			"gAMA", "sRGB"
-		
-		],
-		
-		:renaming_schemata => {
-		
-			:from => Regexp.new("(.+).png"),
-			:to => "\\1-Staged.png"
-		
-		},
-		
-		:confirm_overwrite => false,
-		
-		:notify_by => {
-		
-			:growl => true,
-			:audible => true
-		
-		},
-		
-		:verbose => false,
-		:dry_run => false
+		:from_directory => 		File.expand_path(File.dirname(__FILE__)),
+		:to_directory => 		nil,
+		:strip_chunks => 		[ "gAMA", "sRGB"],
+		:renaming_schemata => 		{ :from => /(.+).png/, :to => "\\1-Staged.png" },
+		:overwrite_existing_file => 	false,
+		:notify_by => 			{ :growl => true, :audible => true },		
+		:verbose => 			false,
+		:dry_run =>			false
 	
 	}
-	
-	def self.options
-	
-		@@options
-	
-	end
 	
 	
 	
@@ -192,13 +143,22 @@ class Pictorial
 			
 		}
 		
-		options.on("--confirm-overwrite", "Confirm overwrite") {
+		options.on("--[no-]overwrite-existing-file",
 		
-			@@options[:confirm_overwrite] = true
+			"Overwrite existing file?"
+			
+		) { |inOverwriteExistingFile|
+		
+			@@options[:overwrite_existing_file] = inOverwriteExistingFile
 		
 		}
 		
-		options.on("--strip sRGB", Array, "Chunks to strip.", "Defaults to gAMA & sRGB.") { |inStripBulks|
+		options.on("--strip sRGB", Array, 
+		
+			"Chunks to strip.", 
+			"Defaults to gAMA & sRGB."
+			
+		) { |inStripBulks|
 		
 			@@options[:strip_chunks] = inStripBulks
 
@@ -214,9 +174,8 @@ class Pictorial
 		
 		options.on("--rename-from [RegExp]", Regexp, 
 			
-			"Process files matching this regular expression literal.", 
-			"Example: \"(.+)(.png)", 
-			"Works with --rename-to."
+			"Regexp that works with --rename-to.", 
+			"Example: \"(.+)(.png)"
 			
 		) { |inRenameFrom|
 
@@ -226,9 +185,8 @@ class Pictorial
 		
 		options.on("--rename-to [String]", String, 
 		
-			"When replacing captured groups during file rename, use this string as the template.", 
-			"Example: \"\\1\\2\"", 
-			"Works with --rename-from."
+			"Template string that works with --rename-from.", 
+			"Example: \"\\1\\2\""
 			
 		) { |inRenameTo|
 
@@ -250,7 +208,12 @@ class Pictorial
 			
 		}
 		
-		options.on("--notify-by growl, audible", Array, "Notify you on completed conversion.", "Defaults to growl, audible.") { |inNotificationMeans|
+		options.on("--notify-by growl, audible", Array, 
+		
+			"Notify you on completed conversion.", 
+			"Defaults to growl, audible."
+			
+		) { |inNotificationMeans|
 		
 			@@options[:notify_by].each_key { |notificationType|
 			
@@ -293,21 +256,11 @@ class Pictorial
 
 
 
-#	The change handler
-
-	@@changeHandler = nil
-
-
-
-
-
 #	Bail, hashing and logging helpers
 	
 	def self.complain (message = "", exits = true)
 	
-		puts "Error: #{message}"
-		puts "\n"
-		
+		puts "Error: #{message} \n"
 		exit if exits
 	
 	end
@@ -333,21 +286,14 @@ class Pictorial
 		puts "\n"
 	
 	end
-	
-	def self.describeOptions
-	
-		puts "Options:"
-		puts "\n"
-		pp @@options
-		puts "\n"
-	
-	end
-	
-	def self.randomHash
-	
-		ActiveSupport::SecureRandom.hex(2)
-	
-	end
+
+
+
+
+
+#	The change handler
+
+	@@changeHandler = nil
 
 
 
@@ -356,8 +302,6 @@ class Pictorial
 #	Main Routine
 
 	def self.initialize
-	
-		puts "\n"
 	
 		begin
 	
@@ -376,7 +320,11 @@ class Pictorial
 		
 		end
 		
-		self.describeOptions if @@options[:verbose]
+		
+		
+		
+		
+		pp @@options if @@options[:verbose]
 		
 		
 		
@@ -392,13 +340,45 @@ class Pictorial
 		
 		end
 		
-		File.mkpath @@options[:to_directory]
+		
+		
+		
+		
+		FileUtils.mkpath @@options[:to_directory]
 		
 		puts "Monitoring:	#{@@options[:from_directory]}"
 		puts "Destination:	#{@@options[:to_directory]}"
 		puts "\n"
 		
-		@@changeHandler = PictorialWatcher.new @@options[:from_directory]
+		
+		
+		
+		
+		@@changeHandler = DirectoryWatcher.new @@options[:from_directory], :pre_load => true
+
+		@@changeHandler.interval = 1.0
+		@@changeHandler.stable = 2.0
+		
+		@@changeHandler.glob = "*"
+		@@changeHandler.add_observer { | *events | 
+		
+			stableFileEvents = events.find_all { |event| event.type == :stable }
+			return if stableFileEvents.empty?
+			
+			eligibleFileEvents = stableFileEvents.find_all { |event| Pictorial.isEligibleFile(event.path) }
+			return if eligibleFileEvents.empty?
+			
+			self.processFiles eligibleFileEvents.map { |event| event.path }
+		
+		}
+		
+		@@changeHandler.start
+
+		begin
+
+			gets
+		
+		end until false
 				
 	end
 
@@ -420,85 +400,83 @@ class Pictorial
 
 #	Workers
 
-	def self.handleChange(changedFiles)
+	def self.processFiles (files)
 	
-		@@changeHandler.stop
+		files.each { |filePath| self.processFile(filePath) }
+
+		self.notifyGrowl "Updated #{files.length} image#{(files.length > 1) ? "s" : ""}}" if @@options[:notify_by][:growl]
+		
+		self.notifyAudible if @@options[:notify_by][:audible]
 	
-		self.say "\n"
-		self.say "Got changed files:"
-		self.say changedFiles
-		
-		changedFiles.each { |thePath|
-		
-			self.processFile(thePath)
-		
-		}
-		
-		self.say "\n"
-		
-		@@changeHandler.start
-		
 	end
+	
+	
+	
+	
 	
 	def self.processFile(thePath)
 	
 		return self.say "#{thePath} is not an eligible file, ignoring." if !self.isEligibleFile(thePath)
 		
 		sourcePath = thePath
-		plausibleDestinationPath = thePath.sub(@@options[:renaming_schemata][:from], @@options[:renaming_schemata][:to]).sub(@@options[:from_directory], @@options[:to_directory])
 		
-		destinationPath = plausibleDestinationPath
+		destinationPath = thePath.sub(@@options[:renaming_schemata][:from], @@options[:renaming_schemata][:to]).sub(@@options[:from_directory].to_s, @@options[:to_directory].to_s)
+				
+		self.say "#{destinationPath} already exists.  We’ll append a hash to the filename.  Use --confirm-overwrite to suppress this behavior and overwrite the file." if ((File.exists? destinationPath) && !(@@options[:overwrite_existing_file]))
 		
-		if ((File.exists? destinationPath) && (!@@options[:confirm_overwrite]))
-		
-			self.say "#{destinationPath} already exists.  We’ll append a hash to the filename.  Use --confirm-overwrite to suppress this behavior and overwrite the file."
-			
-			extensionName = File.extname(plausibleDestinationPath)
-			
-			begin
-			
-				destinationPath = plausibleDestinationPath.sub(extensionName, "#{extensionName.empty? ? '' : '.'}#{self.randomHash}#{extensionName}")
-							
-			end until !(File.exists? destinationPath)
-		
-		end
+		destinationPath = File.uniquePath(destinationPath) if !(@@options[:overwrite_existing_file])
 		
 		self.crushPNG(sourcePath, destinationPath)
 	
 	end
 	
+	
+	
+	
+	
 	def self.crushPNG(fromPath = nil, toPath = nil)
 	
-		fromPathRef = Pathname.new(fromPath).relative_path_from(PICTORIAL_PATH)
-		toPathRef = Pathname.new(toPath).relative_path_from(PICTORIAL_PATH)
+		self.logWithTime "#{fromPath} -> #{toPath}"
 		
-		if @@options[:dry_run]
+		return if @@options[:dry_run]
 		
-			self.logWithTime "Dry Run: #{fromPathRef} -> #{toPathRef}"
-			return
+		fork { exec(
+		
+			"pngcrush
 			
-		else
+				#{@@options[:strip_chunks].empty? ? "" : (" -rem " + @@options[:strip_chunks].join(" -rem "))}
+				\"#{Pathname.new(fromPath).relative_path_from(PICTORIAL_PATH)}\"
+				\"#{Pathname.new(toPath).relative_path_from(PICTORIAL_PATH)}\"
+				#{@@options[:verbose] ? "" : " > /dev/null"}
+			
+			".gsub("\t", " ").gsub("\n", " ")
+			
+		)}
 		
-			self.logWithTime "#{fromPathRef} -> #{toPathRef}"
-		
-		end
+		Process.wait
+		self.say "PNGCrush exited with status #{$?.exitstatus}"
+			
+	end
+	
+	
+	
+	
+	
+#	Notifications
 
-		argumentRemovingChunks = ""
+	@@notificationRepresentativeGrowl = Growl.new "localhost", "pictorial", ["Pictorial"]
 
-		@@options[:strip_chunks].each { |chunkName|
-		
-			argumentRemovingChunks = argumentRemovingChunks + " -rem #{chunkName}"
-		
-		}
-		
-		self.say "pngcrush #{argumentRemovingChunks} \"#{fromPath}\" \"#{toPath}\""
-		
-		commandReturn = `pngcrush #{argumentRemovingChunks} \"#{fromPath}\" \"#{toPath}\"`
-		
-		self.say commandReturn
+	def self.notifyGrowl (message = "", title = "Pictorial")
+	
+		@@notificationRepresentativeGrowl.notify "Pictorial", title, message
 	
 	end
 	
+	def self.notifyAudible
+	
+		puts 7.chr
+		
+	end
 
 end
 
