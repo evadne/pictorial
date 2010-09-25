@@ -18,6 +18,7 @@
 
 	require 'chunky_png'
 	require 'pp'
+	require 'fileutils'
 
 
 
@@ -33,14 +34,16 @@
 	
 	
 	
-	image = ChunkyPNG::Image.from_file(ARGV[0])
-	offsets = []
 	
-	for index in 1..4 do
-		
-		offsets.push ARGV[index].to_i
-		
-	end
+	imagePath = ARGV[0]
+	image = ChunkyPNG::Image.from_file(imagePath)
+	offsetTop = ARGV[1].to_i
+	offsetRight = ARGV[1].to_i
+	offsetBottom = ARGV[1].to_i
+	offsetLeft = ARGV[1].to_i
+	
+	puts ""
+	puts "Slicing #{imagePath}"
 	
 	for index in 1..9 do
 		
@@ -52,6 +55,8 @@
 			[offsetTop, image.height - offsetTop - offsetBottom, offsetBottom][(index / 3.0).ceil - 1],		# Height -> 0, 1, 2
 			
 		).save(imagePath.gsub(/\.png/, "") + "_#{index}.png")
+		
+		puts "Saved slice #{index}"
 		
 	end
 	
