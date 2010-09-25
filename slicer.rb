@@ -3,7 +3,7 @@
 
 #	coding: utf-8
 
-# Slicer.rb
+# slicer.rb
 # Evadne Wu at Iridia, 2010
 
 
@@ -56,6 +56,5 @@
 	end
 	
 	
-
 
 

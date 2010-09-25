@@ -1,4 +1,4 @@
-#	`pictorial.rb`
+#	Pictorial
 
 Pictorial is your tiny image factory.  It monitors a particular directory for new `.png` files matching a particular regular expression, runs them through `PNGCrush`, strips chunks (like, the gamma information or the color profile) optionally, renames them, and places them in another directory before showing a Growl notification or an audible alert.
 
