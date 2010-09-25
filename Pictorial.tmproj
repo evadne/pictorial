@@ -6,25 +6,39 @@
 	<array>
 		<dict>
 			<key>filename</key>
-			<string>constantia.rb</string>
-			<key>selected</key>
-			<true/>
+			<string>File+PictorialAdditions.rb</string>
+			<key>lastUsed</key>
+			<date>2010-09-25T17:35:05Z</date>
+		</dict>
+		<dict>
+			<key>filename</key>
+			<string>pictorial.core.rb</string>
+			<key>lastUsed</key>
+			<date>2010-09-25T17:46:02Z</date>
 		</dict>
 		<dict>
 			<key>filename</key>
 			<string>pictorial.rb</string>
-			<key>selected</key>
-			<true/>
-		</dict>
-		<dict>
-			<key>filename</key>
-			<string>README.md</string>
-			<key>selected</key>
-			<true/>
+			<key>lastUsed</key>
+			<date>2010-09-25T17:45:43Z</date>
 		</dict>
 		<dict>
 			<key>filename</key>
 			<string>slicer.rb</string>
+			<key>lastUsed</key>
+			<date>2010-09-25T18:07:52Z</date>
+		</dict>
+		<dict>
+			<key>filename</key>
+			<string>constantia.rb</string>
+			<key>lastUsed</key>
+			<date>2010-09-25T17:35:07Z</date>
+		</dict>
+		<dict>
+			<key>filename</key>
+			<string>README.md</string>
+			<key>lastUsed</key>
+			<date>2010-09-25T18:07:53Z</date>
 			<key>selected</key>
 			<true/>
 		</dict>

@@ -38,9 +38,9 @@
 	imagePath = ARGV[0]
 	image = ChunkyPNG::Image.from_file(imagePath)
 	offsetTop = ARGV[1].to_i
-	offsetRight = ARGV[1].to_i
-	offsetBottom = ARGV[1].to_i
-	offsetLeft = ARGV[1].to_i
+	offsetRight = ARGV[2].to_i
+	offsetBottom = ARGV[3].to_i
+	offsetLeft = ARGV[4].to_i
 	
 	puts ""
 	puts "Slicing #{imagePath}"

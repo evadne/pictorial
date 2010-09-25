@@ -24,8 +24,8 @@ require 'json'
 
 PICTORIAL_PATH = Pathname.new(File.expand_path(File.dirname(__FILE__)))
 
-load "File+PictorialAdditions.rb"
-load "pictorial.core.rb"
+load "#{PICTORIAL_PATH}/File+PictorialAdditions.rb"
+load "#{PICTORIAL_PATH}/pictorial.core.rb"
 
 Pictorial.initialize
 
